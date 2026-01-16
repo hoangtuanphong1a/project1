@@ -11,6 +11,7 @@ const getCookieValue = (key: string): string => {
 
 // Khởi tạo từ cookie
 const initialAccess = getCookieValue('accessToken');
+const initialRefresh = getCookieValue('refreshToken');
 const initialType = getCookieValue('tokenType');
 const initialExpires = (() => {
   const val = getCookieValue('expiresIn');
@@ -23,17 +24,19 @@ const initialUser: IUser | null = initialUserJson ? JSON.parse(initialUserJson) 
 interface UserState {
   user: IUser | null;
   accessToken: string;
+  refreshToken: string;
   tokenType: string;
   expiresIn: number;
 
   setUser: (u: IUser) => void;
-  setTokens: (data: { access_token: string; token_type: string; expires_in: number }) => void;
+  setTokens: (data: { access_token: string; refresh_token?: string; token_type: string; expires_in: number }) => void;
   clearUser: () => void;
 }
 
 const useUserBaseStore = create<UserState>()((set) => ({
   user: initialUser,
   accessToken: initialAccess,
+  refreshToken: initialRefresh,
   tokenType: initialType,
   expiresIn: initialExpires,
 
@@ -43,13 +46,17 @@ const useUserBaseStore = create<UserState>()((set) => ({
     setCookie('userData', JSON.stringify(u));
   },
 
-  setTokens: ({ access_token, token_type, expires_in }) => {
+  setTokens: ({ access_token, refresh_token, token_type, expires_in }) => {
     set({
       accessToken: access_token,
+      refreshToken: refresh_token || '',
       tokenType: token_type,
       expiresIn: expires_in,
     });
     setCookie('accessToken', access_token);
+    if (refresh_token) {
+      setCookie('refreshToken', refresh_token);
+    }
     setCookie('tokenType', token_type);
     setCookie('expiresIn', expires_in.toString());
   },
@@ -58,10 +65,12 @@ const useUserBaseStore = create<UserState>()((set) => ({
     set({
       user: null,
       accessToken: '',
+      refreshToken: '',
       tokenType: '',
       expiresIn: 0,
     });
     deleteCookie('accessToken');
+    deleteCookie('refreshToken');
     deleteCookie('tokenType');
     deleteCookie('expiresIn');
     deleteCookie('userData'); // XÓA USER

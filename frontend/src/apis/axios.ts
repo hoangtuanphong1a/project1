@@ -83,12 +83,23 @@ request.interceptors.response.use(
 );
 
 // Tự động thêm token vào header
-request.interceptors.request.use((config) => {
-  const { accessToken, tokenType } = useUserStore.getState();
-  if (accessToken) {
-    config.headers['Authorization'] = `${tokenType} ${accessToken}`;
+request.interceptors.request.use(
+  (config) => {
+    const { accessToken, tokenType } = useUserStore.getState();
+    console.log('Auth Interceptor - Token check:', { accessToken: !!accessToken, tokenType });
+
+    if (accessToken) {
+      config.headers['Authorization'] = `${tokenType} ${accessToken}`;
+      console.log('Auth Header Added:', config.headers['Authorization']);
+    } else {
+      console.log('No token found, skipping auth header');
+    }
+    return config;
+  },
+  (error) => {
+    console.error('Auth Header Error:', error);
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export { request };

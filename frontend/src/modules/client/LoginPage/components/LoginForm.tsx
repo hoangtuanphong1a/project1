@@ -3,12 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  AuthService,
-  KEYS,
   useGetMe,
   useLoginMutation,
 } from "@/apis/client/auth";
-import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/stores";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -28,7 +25,6 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
 
   // GỌI useGetMe ĐỂ KIỂM TRA ĐÃ LOGIN CHƯA
   const {
@@ -38,6 +34,7 @@ export function LoginForm({
   } = useGetMe({
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 phút
+    enabled: false, // Disable auto-check trên trang login
   });
 
   const form = useForm<LoginSchemaType>({
@@ -53,13 +50,42 @@ export function LoginForm({
 
   const { mutate: login, isPending } = useLoginMutation({
     onSuccess: async (data) => {
-      setTokens(data);
+      console.log('Login Success - Raw data:', data);
 
-      // Gọi /me → AuthService.me sẽ tự setUser + lưu cookie
-      await queryClient.fetchQuery({
-        queryKey: [KEYS.AUTH_ME],
-        queryFn: AuthService.me,
-      });
+      // Lưu tokens trước
+      setTokens(data);
+      console.log('Tokens saved to store');
+
+      // Gọi /me với token mới được truyền trực tiếp
+      console.log('Calling /auth/me with new token...');
+      try {
+        // Tạo request với token mới
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+        const response = await fetch(`${apiUrl}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${data.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('/auth/me call completed with user data:', userData);
+
+          // Update user in store
+          const { setUser } = useUserStore.getState();
+          setUser(userData);
+        } else {
+          console.error('/auth/me failed with status:', response.status);
+          // Log response text for debugging
+          const errorText = await response.text();
+          console.error('/auth/me error response:', errorText);
+        }
+      } catch (meError) {
+        console.error('/auth/me call failed:', meError);
+        // Vẫn cho phép login thành công ngay cả khi /me thất bại
+      }
 
       toast.success("Chào mừng trở lại!");
       const redirect = searchParams.get("redirect");

@@ -13,7 +13,7 @@ export default function RegisterPage() {
       <div className="relative hidden overflow-hidden lg:block">
         <BgGradient />
         <Image
-          src="/images/bg.jpg"
+          src="/images/bg.svg"
           alt="Tuyển dụng - CVking"
           fill
           className="absolute inset-0 h-full w-full object-cover"
