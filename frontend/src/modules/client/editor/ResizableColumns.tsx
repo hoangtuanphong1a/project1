@@ -11,7 +11,7 @@ import { useEditorStore, ElementData } from '@/stores/editorStore';
 interface ColumnDropZoneProps {
   parentId: string;
   columnIndex: number;
-  children: ElementData[];
+  childElements: ElementData[];
   onRemoveChild: (childId: string) => void;
   renderChildContent: (child: ElementData) => React.ReactNode;
   isDragging: boolean;
@@ -107,8 +107,7 @@ const EditableText = ({ element, onUpdate }: { element: ElementData; onUpdate: (
 };
 
 const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundColor }: SortableChildProps) => {
-  const { selectElement, selectedElementId, isDragging, updateElement } = useEditorStore();
-  const isSelected = selectedElementId === child.id;
+  const { selectElement, selectedElementId, updateElement } = useEditorStore();
   const [dropPosition, setDropPosition] = useState<'before' | 'inside' | 'after' | null>(null);
   const childRef = useRef<HTMLDivElement>(null);
 
@@ -121,21 +120,10 @@ const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundCo
   });
 
   const [pointerY, setPointerY] = useState(0);
-  
-  useEffect(() => {
-    if (!isDragging) return;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      setPointerY(e.clientY);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, [isDragging]);
 
   useDndMonitor({
-    onDragOver: (event: any) => {
-      if (!isDragging || !childRef.current || pointerY === 0) {
+    onDragOver: (event) => {
+      if (!childRef.current || pointerY === 0) {
         setDropPosition(null);
         return;
       }
@@ -165,7 +153,6 @@ const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundCo
   const baseStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition: isChildDragging ? 'none' : transition,
-    pointerEvents: (isDragging ? 'none' : 'auto') as React.CSSProperties['pointerEvents'],
     margin: child.styles.margin && child.styles.margin !== '0' ? child.styles.margin : undefined,
     backgroundColor: child.styles.backgroundColor || columnBackgroundColor || undefined,
   };
@@ -184,8 +171,8 @@ const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundCo
       suppressHydrationWarning
       className={cn(
         'relative bg-card p-2 text-sm cursor-pointer transition-colors',
-        isSelected && 'border shadow-md',
-        !isSelected && 'border border-transparent hover:border-blue-400/50',
+        selectedElementId === child.id && 'border shadow-md',
+        selectedElementId !== child.id && 'border border-transparent hover:border-blue-400/50',
         isChildDragging && 'opacity-50 z-50'
       )}
       onClick={(e) => {
@@ -218,7 +205,7 @@ const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundCo
       >
         <Trash2 className="w-2.5 h-2.5" />
       </button>
-      {(child.type === 'image' || child.type === 'video') && isSelected && (
+      {(child.type === 'image' || child.type === 'video') && selectedElementId === child.id && (
         <label className="absolute top-2 right-8 p-1.5 bg-blue-400 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20">
           <Upload className="w-3 h-3" />
           <input
@@ -252,10 +239,9 @@ const SortableChild = ({ child, onRemove, renderChildContent, columnBackgroundCo
 const ColumnDropZone = ({
   parentId,
   columnIndex,
-  children,
+  childElements,
   onRemoveChild,
   renderChildContent,
-  isDragging,
   columnBackgroundColor,
 }: ColumnDropZoneProps) => {
   const { isOver, setNodeRef } = useDroppable({
@@ -267,7 +253,7 @@ const ColumnDropZone = ({
     },
   });
 
-  const childIds = useMemo(() => children.map((c) => c.id), [children]);
+  const childIds = useMemo(() => childElements.map((c) => c.id), [childElements]);
 
   return (
     <div
@@ -281,7 +267,7 @@ const ColumnDropZone = ({
         isOver ? 'border-blue-400 bg-blue-400/10' : 'border-transparent bg-muted/30 hover:border-blue-400/50'
       )}
     >
-      {children.length === 0 ? (
+      {childElements.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center py-4">
           <Plus className="w-5 h-5 text-muted-foreground/50 mb-1" />
           <span className="text-xs text-muted-foreground/70">Kéo phần tử vào đây</span>
@@ -290,7 +276,7 @@ const ColumnDropZone = ({
         <>
           <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
             <div>
-              {children.map((child) => {
+              {childElements.map((child) => {
                 if (child.type === '2columns' || child.type === '3columns' || child.type === '4columns') {
                   return (
                     <div key={child.id} className="relative">
@@ -403,7 +389,7 @@ const ResizableColumnDivider = ({
 };
 
 export const ResizableColumns = ({ element, renderChildContent }: ResizableColumnsProps) => {
-  const { updateColumnWidths, removeChildElement, selectElement, selectedElementId, isDragging, updateElement } = useEditorStore();
+  const { updateColumnWidths, removeChildElement, selectElement, isDragging } = useEditorStore();
   const [isResizing, setIsResizing] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [localWidths, setLocalWidths] = useState<number[]>(() => {
@@ -423,7 +409,6 @@ export const ResizableColumns = ({ element, renderChildContent }: ResizableColum
   }, [element.columnWidths]);
 
   const columnCount = element.type === '2columns' ? 2 : element.type === '3columns' ? 3 : 4;
-  const isSelected = selectedElementId === element.id;
 
   const handleResize = useCallback(
     (dividerIndex: number, deltaPercent: number) => {
@@ -459,7 +444,7 @@ export const ResizableColumns = ({ element, renderChildContent }: ResizableColum
     return grouped;
   }, [element.children, columnCount]);
 
-  const columnBackgroundColors = (element as any).columnBackgroundColors || [];
+  const columnBackgroundColors = (element as { columnBackgroundColors?: string[] }).columnBackgroundColors || [];
 
   return (
     <div
@@ -483,7 +468,7 @@ export const ResizableColumns = ({ element, renderChildContent }: ResizableColum
             <ColumnDropZone
               parentId={element.id}
               columnIndex={colIndex}
-              children={childrenByColumn[colIndex]}
+              childElements={childrenByColumn[colIndex]}
               onRemoveChild={(childId) => removeChildElement(element.id, childId)}
               renderChildContent={renderChildContent}
               isDragging={isDragging}

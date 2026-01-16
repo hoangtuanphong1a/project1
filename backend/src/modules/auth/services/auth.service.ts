@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { RegisterDto, registerEmployeeDto } from '../dtos/register.dto';
 import * as bcrypt from 'bcrypt';
 import { loginDto } from '../dtos/login.dto';
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly usersRoleService: UserRolesService,
     private readonly em: EntityManager,
     private readonly jwt: JwtService,
+    private readonly configService: ConfigService,
 
     @InjectRepository(JobSeekerProfile)
     private readonly jobSeekerRepo: EntityRepository<JobSeekerProfile>,
@@ -48,21 +50,24 @@ export class AuthService {
 
     const payload = { sub: userId, email, roles: roleNames, type: 'access' };
 
+    const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET') || 'access_secret';
+    const accessExpiresIn = this.configService.get<string>('JWT_ACCESS_EXPIRATION_TIME') || '1h';
+
     const accessToken = await this.jwt.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET || 'access_secret',
-      expiresIn: process.env.JWT_ACCESS_EXPIRATION_TIME,
+      secret: accessSecret,
+      expiresIn: accessExpiresIn,
     });
-    console.log('ACCESS_EXPIRE', process.env.JWT_ACCESS_EXPIRATION_TIME);
-    console.log(
-      'sign secret',
-      process.env.JWT_ACCESS_SECRET || 'access_secret'
-    );
+    console.log('ACCESS_EXPIRE', accessExpiresIn);
+    console.log('sign secret', accessSecret);
+
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh_secret';
+    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRATION_TIME') || '7d';
 
     const refreshToken = await this.jwt.signAsync(
       { ...payload, type: 'refresh' },
       {
-        secret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
-        expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
+        secret: refreshSecret,
+        expiresIn: refreshExpiresIn,
       }
     );
     return { accessToken, refreshToken };

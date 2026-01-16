@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -155,9 +156,11 @@ export const CoverImageUpload = React.forwardRef<
       {/* Preview ảnh */}
       {preview && (
         <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-purple-200">
-          <img
+          <Image
             src={preview}
             alt="Preview ảnh bìa"
+            width={800}
+            height={320}
             className="w-full h-80 object-cover"
           />
           <button

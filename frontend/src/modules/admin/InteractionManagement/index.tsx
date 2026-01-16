@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from 'react';
 import { useGetBlogInfiniteQuery } from '@/apis/client/blog/queries';
-import { useQueryClient } from '@tanstack/react-query';
 import { useQueries } from '@tanstack/react-query';
 
 import Backpage from '@/components/ui/back-page';
@@ -11,14 +10,12 @@ import { DataTable } from '@/components/ui/data-table';
 
 import { columns } from './config/columns';
 import { buildInteractionTree, IInteractionNode } from './libs/utils';
-import { KEYS } from '@/apis/client/blog/keys';
 import { CommentService } from '@/apis/client/comment/requests';
 import { LikeService } from '@/apis/client/like/requests';
 import { CommentListResponse } from '@/apis/client/comment/types';
 import { LikeListResponse } from '@/apis/client/like/types';
 
 function InteractionManagement() {
-  const queryClient = useQueryClient();
   const { data: postsData, isLoading: isLoadingPosts, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetBlogInfiniteQuery(
     undefined,
     { limit: 100 } // Maximum allowed by backend
@@ -123,4 +120,3 @@ function InteractionManagement() {
 }
 
 export default InteractionManagement;
-

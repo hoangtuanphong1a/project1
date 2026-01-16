@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import Backpage from '@/components/ui/back-page';
 import { LoadingScreen } from '@/components/ui/loading';
 import { DataTable } from '@/components/ui/data-table';
@@ -9,10 +7,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { columns } from './config/columns';
 import { buildTreeFromUsers } from './libs/utils';
 import { useGetAllUsersQuery } from '@/apis/client/user/queries';
-import { KEYS } from '@/apis/client/user/keys';
 
 function UserManagement() {
-  const queryClient = useQueryClient();
   
   const { data: users, isLoading } = useGetAllUsersQuery();
 
@@ -47,4 +43,3 @@ function UserManagement() {
 }
 
 export default UserManagement;
-
