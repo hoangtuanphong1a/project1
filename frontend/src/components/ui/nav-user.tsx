@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IUser, KEYS, useLogoutMutation } from "@/apis/client/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/stores";
-import { BarChart3, LogOut, Settings, User, MoreVertical } from "lucide-react";
+import { BarChart3, CirclePlus, LogOut, Settings, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { ROUTES } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "./badge";
+import { IconDotsVertical } from "@tabler/icons-react";
 
 interface Props {
   user: IUser;
@@ -60,52 +63,52 @@ export function NavUser({ user }: Props) {
               {user.full_name}{" "}
             </span>
           </div>
-          <MoreVertical className="ml-auto size-4" />
+          <IconDotsVertical className="ml-auto size-4" />
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-72">
+      <DropdownMenuContent className="w-72" align="end" tabIndex={-1}>
         {/* === THÔNG TIN USER === */}
-        <div className="p-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
+        <Link
+          href={isAdmin ? "/admin" : ROUTES.HOME}
+          className={isAdmin ? "pointer-events-none cursor-default" : ""}
+        >
+          <DropdownMenuItem className="gap-3">
+            <Avatar className="h-10 w-10">
               {user.avatar_url ? (
                 <AvatarImage src={user.avatar_url} alt={user.userName} />
               ) : (
-                <AvatarFallback className="bg-purple-100 text-purple-600 text-lg font-semibold">
+                <AvatarFallback>
                   {user.full_name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               )}
             </Avatar>
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-0">
               <div className="flex items-center gap-2">
-                <div className="font-semibold text-foreground">{user.full_name}</div>
+                <div className="font-medium">{user.userName}</div>
                 {isAdmin && (
                   <Badge
                     variant="secondary"
-                    className="text-xs border-purple-300 bg-purple-50 text-purple-700"
+                    className="text-xs border-purple-300"
                   >
-                    Admin
+                    Quản trị viên
                   </Badge>
                 )}
                 {isUser && (
                   <Badge
                     variant="secondary"
-                    className="text-xs border-blue-300 bg-blue-50 text-blue-700"
+                    className="text-xs border-purple-300"
                   >
-                    User
+                    Người dùng
                   </Badge>
                 )}
               </div>
-              <div className="text-muted-foreground max-w-[200px] truncate text-sm">
+              <div className="text-muted-foreground max-w-[200px] truncate text-sm pt-1">
                 {user.email}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Chào mừng bạn quay trở lại!
-              </div>
             </div>
-          </div>
-        </div>
+          </DropdownMenuItem>
+        </Link>
         {/* === ADMIN PANEL === */}
         {isAdmin && (
           <>
@@ -128,6 +131,13 @@ export function NavUser({ user }: Props) {
         >
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => router.push(ROUTES.CREATE_POST)}
+          className="flex items-center"
+        >
+          <CirclePlus className="mr-2 h-4 w-4" />
+          <span>Tạo bài viết</span>
         </DropdownMenuItem>
         {/* === CÀI ĐẶT (chỉ user thường) === */}
         {!isAdmin && (

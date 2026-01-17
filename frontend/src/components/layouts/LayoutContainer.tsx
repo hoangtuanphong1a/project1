@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import React from "react";
 import { usePathname } from "next/navigation";
@@ -8,7 +8,7 @@ import { Footer } from "./footer";
 
 const LayoutContainer = ({ children }: React.PropsWithChildren) => {
   const pathname = usePathname();
-  const hideHeaderFooter = [ROUTES.LOGIN, ROUTES.REGISTER].some((route) =>
+  const hideHeaderFooter = [ROUTES.LOGIN, ROUTES.REGISTER, ROUTES.NEW].some((route) =>
     pathname.startsWith(route)
   );
 

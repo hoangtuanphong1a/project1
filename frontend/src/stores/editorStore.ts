@@ -24,7 +24,6 @@ export interface ElementData {
   children?: ElementData[];
   columnWidths?: number[];
   columnBackgroundColors?: string[]; // ✅ FIX 3: Màu nền riêng cho mỗi column
-  columnIndex?: number; // Add columnIndex property to ElementData interface
 }
 
 export interface EditorState {
@@ -133,29 +132,29 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set((state) => ({
         elements: findAndUpdateElement(state.elements, parentId, (el) => {
           const children = el.children || [];
-          const columnChildren = children.filter((c) => c.columnIndex === columnIndex);
-
+          const columnChildren = children.filter((c) => (c as any).columnIndex === columnIndex);
+          
           if (insertIndex !== undefined && insertIndex >= 0 && insertIndex <= columnChildren.length) {
             const newChildren = [...children];
             let currentIndex = 0;
             for (let i = 0; i < children.length; i++) {
-              if (children[i].columnIndex === columnIndex) {
+              if ((children[i] as any).columnIndex === columnIndex) {
                 if (currentIndex === insertIndex) {
-                  newChildren.splice(i, 0, { ...newElement, columnIndex });
+                  newChildren.splice(i, 0, { ...newElement, columnIndex } as any);
                   return { ...el, children: newChildren };
                 }
                 currentIndex++;
               }
             }
             if (currentIndex === insertIndex) {
-              newChildren.push({ ...newElement, columnIndex });
+              newChildren.push({ ...newElement, columnIndex } as any);
             }
             return { ...el, children: newChildren };
           }
-
+          
           return {
             ...el,
-            children: [...children, { ...newElement, columnIndex }],
+            children: [...children, { ...newElement, columnIndex } as any],
           };
         }),
         selectedElementId: newElement.id,
@@ -221,9 +220,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       // ✅ Case 2: Both in columns - cải thiện di chuyển giữa các cột
       let activeChild: ElementData | null = null;
       let activeParentId: string | null = null;
+      let activeColumnIndex: number | null = null;
       let overChild: ElementData | null = null;
       let overParentId: string | null = null;
-      let overColumnIndex: number | null | undefined = null;
+      let overColumnIndex: number | null = null;
 
       // Tìm active và over child
       for (const el of state.elements) {
@@ -233,6 +233,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
             if (found) {
               activeChild = found;
               activeParentId = el.id;
+              activeColumnIndex = (found as any).columnIndex;
             }
           }
           if (!overChild) {
@@ -240,7 +241,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
             if (found) {
               overChild = found;
               overParentId = el.id;
-              overColumnIndex = found.columnIndex;
+              overColumnIndex = (found as any).columnIndex;
             }
           }
           if (activeChild && overChild) break;
@@ -259,7 +260,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
               if (activeIndex !== -1 && overIndex !== -1) {
                 const [removed] = newChildren.splice(activeIndex, 1);
                 // ✅ Cập nhật columnIndex khi di chuyển sang cột khác
-                const updatedChild = { ...removed, columnIndex: overColumnIndex ?? undefined };
+                const updatedChild = { ...removed, columnIndex: overColumnIndex } as any;
                 newChildren.splice(overIndex, 0, updatedChild);
               }
               
@@ -278,7 +279,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           elements: findAndUpdateElement(newElements, overParentId, (el) => {
             const newChildren = el.children ? [...el.children] : [];
             const overIndex = newChildren.findIndex((c) => c.id === overId);
-            const updatedChild = { ...activeChild, columnIndex: overColumnIndex ?? undefined };
+            const updatedChild = { ...activeChild, columnIndex: overColumnIndex } as any;
             
             if (overIndex !== -1) {
               newChildren.splice(overIndex, 0, updatedChild);
@@ -323,29 +324,29 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((state) => ({
       elements: findAndUpdateElement(state.elements, parentId, (el) => {
         const children = el.children || [];
-        const columnChildren = children.filter((c) => c.columnIndex === columnIndex);
-
+        const columnChildren = children.filter((c) => (c as any).columnIndex === columnIndex);
+        
         if (insertIndex !== undefined && insertIndex >= 0 && insertIndex <= columnChildren.length) {
           const newChildren = [...children];
           let currentIndex = 0;
           for (let i = 0; i < children.length; i++) {
-            if (children[i].columnIndex === columnIndex) {
+            if ((children[i] as any).columnIndex === columnIndex) {
               if (currentIndex === insertIndex) {
-                newChildren.splice(i, 0, { ...newElement, columnIndex });
+                newChildren.splice(i, 0, { ...newElement, columnIndex } as any);
                 return { ...el, children: newChildren };
               }
               currentIndex++;
             }
           }
           if (currentIndex === insertIndex) {
-            newChildren.push({ ...newElement, columnIndex });
+            newChildren.push({ ...newElement, columnIndex } as any);
           }
           return { ...el, children: newChildren };
         }
-
+        
         return {
           ...el,
-          children: [...children, { ...newElement, columnIndex }],
+          children: [...children, { ...newElement, columnIndex } as any],
         };
       }),
       selectedElementId: newElement.id,
@@ -371,11 +372,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
     set((state) => {
       // ✅ FIX: Tìm target trong canvas elements
-      const targetIndex = state.elements.findIndex((el) => el.id === targetId);
+      let targetIndex = state.elements.findIndex((el) => el.id === targetId);
       let targetElement: ElementData | null = null;
       let isInColumn = false;
       let parentId: string | null = null;
-      let columnIndex: number | null | undefined = null;
+      let columnIndex: number | null = null;
 
       if (targetIndex !== -1) {
         targetElement = state.elements[targetIndex];
@@ -388,7 +389,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
               targetElement = el.children[childIndex];
               isInColumn = true;
               parentId = el.id;
-              columnIndex = el.children[childIndex].columnIndex;
+              columnIndex = (el.children[childIndex] as any).columnIndex;
               break;
             }
           }
@@ -404,7 +405,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         return {
           elements: findAndUpdateElement(state.elements, parentId, (el) => {
             const children = el.children || [];
-            const columnChildren = children.filter((c) => c.columnIndex === columnIndex);
+            const columnChildren = children.filter((c) => (c as any).columnIndex === columnIndex);
             const targetChildIndex = columnChildren.findIndex((c) => c.id === targetId);
             
             if (targetChildIndex === -1) {
@@ -416,7 +417,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
             let insertAt = -1;
 
             for (let i = 0; i < children.length; i++) {
-              if (children[i].columnIndex === columnIndex) {
+              if ((children[i] as any).columnIndex === columnIndex) {
                 if (currentIndex === targetChildIndex) {
                   insertAt = i;
                   break;
@@ -427,9 +428,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
             if (insertAt !== -1) {
               if (position === 'before') {
-                newChildren.splice(insertAt, 0, { ...newElement, columnIndex });
+                newChildren.splice(insertAt, 0, { ...newElement, columnIndex } as any);
               } else if (position === 'after') {
-                newChildren.splice(insertAt + 1, 0, { ...newElement, columnIndex });
+                newChildren.splice(insertAt + 1, 0, { ...newElement, columnIndex } as any);
               } else if (position === 'inside') {
                 const targetChild = children[insertAt];
                 if (targetChild.children) {

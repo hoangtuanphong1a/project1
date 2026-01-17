@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -28,6 +27,7 @@ interface UpdatePostDialogProps {
 }
 
 export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }: UpdatePostDialogProps) {
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
   const updateMutation = useUpdatePostMutation({
@@ -75,6 +75,7 @@ export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }
         published: post.status === 'published',
         image: null,
       });
+      setTags(post.tags || []);
     }
   }, [post, open, reset]);
 
@@ -85,6 +86,7 @@ export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }
       if (value && !currentTags.includes(value) && currentTags.length < 5) {
         const newTags = [...currentTags, value];
         setValue('tags', newTags);
+        setTags(newTags);
         setTagInput('');
       }
     }
@@ -93,6 +95,7 @@ export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }
   const removeTag = (index: number) => {
     const newTags = currentTags.filter((_, i) => i !== index);
     setValue('tags', newTags);
+    setTags(newTags);
   };
 
   const onSubmit = async (data: PostFormData) => {
@@ -201,11 +204,9 @@ export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }
                   {post && post.image_url && !coverImage && (
                     <div className="mb-4">
                       <p className="text-sm text-gray-600 mb-2">Ảnh hiện tại:</p>
-                      <Image
+                      <img
                         src={post.image_url}
                         alt="Current cover"
-                        width={400}
-                        height={192}
                         className="w-full h-48 object-cover rounded-lg border"
                       />
                     </div>
@@ -252,3 +253,4 @@ export default function UpdatePostDialog({ post, open, onOpenChange, onSuccess }
     </Dialog>
   );
 }
+

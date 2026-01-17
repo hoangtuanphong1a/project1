@@ -66,13 +66,13 @@ export const useMarkNotificationReadMutation = (
 
   return useMutation<NotificationResponse, Error, string>({
     mutationFn: (id: string) => NotificationService.markAsRead(id),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       // Invalidate danh sách và số lượng unread sau khi đánh dấu đã đọc
       invalidateByKey(KEYS.LIST);
       invalidateByKey(KEYS.UNREAD_COUNT);
 
       // Gọi onSuccess từ options (nếu có)
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options, // Các options khác (onError, onSettled, ...) được giữ nguyên
   });
@@ -93,10 +93,10 @@ export const useMarkNotificationUnreadMutation = (
 
   return useMutation<NotificationResponse, Error, string>({
     mutationFn: (id: string) => NotificationService.markAsUnread(id),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       invalidateByKey(KEYS.LIST);
       invalidateByKey(KEYS.UNREAD_COUNT);
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });
@@ -117,10 +117,10 @@ export const useMarkAllNotificationsReadMutation = (
 
   return useMutation<BaseResponse, Error, void>({
     mutationFn: () => NotificationService.markAllAsRead(),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       invalidateByKey(KEYS.LIST);
       invalidateByKey(KEYS.UNREAD_COUNT);
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });

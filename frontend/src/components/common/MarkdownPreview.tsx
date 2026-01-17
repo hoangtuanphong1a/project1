@@ -9,7 +9,6 @@ import rehypeSanitize from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { Components } from "react-markdown";
-import type { DetailedHTMLProps, ImgHTMLAttributes } from "react";
 
 
 // Định nghĩa type đúng cho style
@@ -59,18 +58,14 @@ export const MarkdownPreview = ({ content }: MarkdownPreviewProps) => {
       );
     },
 
-    img: (props: DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>) => {
-      const { src, alt, className, ...restProps } = props;
-      return (
-        <img
-          src={src}
-          alt={alt || ""}
-          className={`max-w-full h-auto rounded-lg shadow-md my-4 ${className || ""}`}
-          loading="lazy"
-          {...restProps}
-        />
-      );
-    },
+    img: ({ src, alt }) => (
+      <img
+        src={src}
+        alt={alt || ""}
+        className="max-w-full h-auto rounded-lg shadow-md my-4"
+        loading="lazy"
+      />
+    ),
   };
 
   return (

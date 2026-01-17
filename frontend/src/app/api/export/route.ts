@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     await browser.close();
 
-    return new NextResponse(result, {
+    return new NextResponse(new Uint8Array(result), {
       headers: {
         'Content-Type': type === 'pdf' ? 'application/pdf' : 'image/png',
         'Content-Disposition': `attachment; filename="design.${type === 'pdf' ? 'pdf' : 'png'}"`,
@@ -105,4 +105,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Export failed' }, { status: 500 });
   }
 }
-

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -45,12 +44,5 @@ export class AuthController {
   async logout(@Req() req) {
     const userId: string = req.user.sub; // đảm bảo là string
     return this.authService.logout(userId);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get('me')
-  async getProfile(@Req() req: any) {
-    const userId: string = req.user.sub;
-    return this.authService.getProfile(userId);
   }
 }

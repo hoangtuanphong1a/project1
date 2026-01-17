@@ -9,7 +9,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { RegisterDto, registerEmployeeDto } from '../dtos/register.dto';
 import * as bcrypt from 'bcrypt';
 import { loginDto } from '../dtos/login.dto';
@@ -26,7 +25,6 @@ export class AuthService {
     private readonly usersRoleService: UserRolesService,
     private readonly em: EntityManager,
     private readonly jwt: JwtService,
-    private readonly configService: ConfigService,
 
     @InjectRepository(JobSeekerProfile)
     private readonly jobSeekerRepo: EntityRepository<JobSeekerProfile>,
@@ -50,24 +48,21 @@ export class AuthService {
 
     const payload = { sub: userId, email, roles: roleNames, type: 'access' };
 
-    const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET') || 'access_secret';
-    const accessExpiresIn = this.configService.get<string>('JWT_ACCESS_EXPIRATION_TIME') || '1h';
-
     const accessToken = await this.jwt.signAsync(payload, {
-      secret: accessSecret,
-      expiresIn: accessExpiresIn,
+      secret: process.env.JWT_ACCESS_SECRET || 'access_secret',
+      expiresIn: process.env.JWT_ACCESS_EXPIRATION_TIME,
     });
-    console.log('ACCESS_EXPIRE', accessExpiresIn);
-    console.log('sign secret', accessSecret);
-
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh_secret';
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRATION_TIME') || '7d';
+    console.log('ACCESS_EXPIRE', process.env.JWT_ACCESS_EXPIRATION_TIME);
+    console.log(
+      'sign secret',
+      process.env.JWT_ACCESS_SECRET || 'access_secret'
+    );
 
     const refreshToken = await this.jwt.signAsync(
       { ...payload, type: 'refresh' },
       {
-        secret: refreshSecret,
-        expiresIn: refreshExpiresIn,
+        secret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
+        expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
       }
     );
     return { accessToken, refreshToken };
@@ -213,29 +208,5 @@ export class AuthService {
   async logout(userId: string) {
     await this.usersService.update(userId, { refreshToken: null });
     return { success: true };
-  }
-
-  async getProfile(userId: string) {
-    const user = await this.usersService.getUserById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const userRoleEntities = await this.usersRoleService.findByUser(userId);
-    const roleNames = await Promise.all(
-      userRoleEntities.map(async ur => {
-        const role = await this.rolesService.findOne(ur.roleId);
-        return role.roleName;
-      })
-    );
-
-    return {
-      id: user.id,
-      email: user.email,
-      full_name: user.displayName,
-      userName: user.displayName,
-      avatar_url: user.avatar || null,
-      role: roleNames[0] || 'User',
-    };
   }
 }

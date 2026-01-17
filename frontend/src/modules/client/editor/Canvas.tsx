@@ -3,7 +3,7 @@
 import React, { forwardRef, useMemo, useState, useEffect, useRef } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, ImageIcon, Trash2, GripVertical, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useDroppable, useDndMonitor, DragOverEvent } from '@dnd-kit/core';
+import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
@@ -111,9 +111,9 @@ const renderChildContent = (child: ElementData, onUpdate?: (content: string) => 
       const childDividerHeight = child.styles.height || '1px';
       const childDividerAlign = child.styles.textAlign || 'center';
       return (
-        <div
-          style={{
-            textAlign: childDividerAlign as 'left' | 'center' | 'right',
+        <div 
+          style={{ 
+            textAlign: childDividerAlign as any,
             display: 'flex',
             justifyContent: childDividerAlign === 'left' ? 'flex-start' : childDividerAlign === 'right' ? 'flex-end' : 'center',
           }}
@@ -157,7 +157,7 @@ const renderChildContent = (child: ElementData, onUpdate?: (content: string) => 
   }
 };
 
-const renderElementContent = (element: ElementData, onUpdate: (content: string) => void): React.ReactNode => {
+const renderElementContent = (element: ElementData, onUpdate: (content: string) => void, updateElement?: (id: string, updates: Partial<ElementData>) => void): React.ReactNode => {
   switch (element.type) {
     case 'heading1':
     case 'heading2':
@@ -188,9 +188,9 @@ const renderElementContent = (element: ElementData, onUpdate: (content: string) 
       const dividerHeight = element.styles.height || '1px';
       const dividerAlign = element.styles.textAlign || 'center';
       return (
-        <div
-          style={{
-            textAlign: dividerAlign as 'left' | 'center' | 'right',
+        <div 
+          style={{ 
+            textAlign: dividerAlign as any,
             display: 'flex',
             justifyContent: dividerAlign === 'left' ? 'flex-start' : dividerAlign === 'right' ? 'flex-end' : 'center',
           }}
@@ -286,7 +286,7 @@ const SortableElementComponent = forwardRef<HTMLDivElement, SortableElementProps
   }, [globalIsDragging]);
 
   useDndMonitor({
-    onDragOver: (event: DragOverEvent) => {
+    onDragOver: (event: any) => {
       if (!globalIsDragging || !elementRef.current || pointerY === 0) {
         setDropPosition(null);
         return;
@@ -333,7 +333,7 @@ const SortableElementComponent = forwardRef<HTMLDivElement, SortableElementProps
     return padding && padding !== '0' ? { padding } : {};
   }, [element.styles.padding]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -349,13 +349,6 @@ const SortableElementComponent = forwardRef<HTMLDivElement, SortableElementProps
       ref={(node) => {
         setNodeRef(node);
         elementRef.current = node;
-        if (ref) {
-          if (typeof ref === 'function') {
-            ref(node);
-          } else {
-            ref.current = node;
-          }
-        }
       }}
       data-sortable-id={element.id}
       suppressHydrationWarning
@@ -411,7 +404,7 @@ const SortableElementComponent = forwardRef<HTMLDivElement, SortableElementProps
           <input
             type="file"
             accept={element.type === 'image' ? 'image/*' : 'video/*'}
-            onChange={(e) => handleFileUpload(e)}
+            onChange={(e) => handleFileUpload(e, element.type as 'image' | 'video')}
             className="hidden"
           />
         </label>
@@ -431,7 +424,7 @@ const SortableElementComponent = forwardRef<HTMLDivElement, SortableElementProps
 SortableElementComponent.displayName = 'SortableElement';
 
 export const Canvas = () => {
-  const { elements, viewMode, selectedElementId, selectElement } = useEditorStore();
+  const { elements, viewMode, isDragging, selectedElementId, selectElement } = useEditorStore();
   const { isOver, setNodeRef } = useDroppable({ id: 'canvas-droppable' });
   const elementIds = useMemo(() => elements.map((el) => el.id), [elements]);
   const [zoom, setZoom] = useState(100);

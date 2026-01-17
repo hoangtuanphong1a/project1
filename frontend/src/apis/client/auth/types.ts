@@ -5,23 +5,13 @@
 //   user: IUser;
 // }
 
-// Backend login response
-export interface IBackendLoginResponse {
-  user: IUser;
+export interface ILoginResponse {
   accessToken: string;
   refreshToken: string;
 }
-
-export interface ILoginResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-}
 export interface IRefreshTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface IRegisterResponse {

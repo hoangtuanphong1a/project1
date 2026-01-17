@@ -11,13 +11,8 @@ const getCookieValue = (key: string): string => {
 
 // Khởi tạo từ cookie
 const initialAccess = getCookieValue('accessToken');
-const initialRefresh = getCookieValue('refreshToken');
-const initialType = getCookieValue('tokenType');
-const initialExpires = (() => {
-  const val = getCookieValue('expiresIn');
-  const num = Number(val);
-  return isNaN(num) ? 0 : num;
-})();
+const initialRefreshToken = getCookieValue('refreshToken');
+
 const initialUserJson = getCookieValue('userData');
 const initialUser: IUser | null = initialUserJson ? JSON.parse(initialUserJson) : null;
 
@@ -25,20 +20,16 @@ interface UserState {
   user: IUser | null;
   accessToken: string;
   refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
 
   setUser: (u: IUser) => void;
-  setTokens: (data: { access_token: string; refresh_token?: string; token_type: string; expires_in: number }) => void;
+  setTokens: (data: { accessToken: string; refreshToken: string}) => void;
   clearUser: () => void;
 }
 
 const useUserBaseStore = create<UserState>()((set) => ({
   user: initialUser,
   accessToken: initialAccess,
-  refreshToken: initialRefresh,
-  tokenType: initialType,
-  expiresIn: initialExpires,
+  refreshToken: initialRefreshToken,
 
   // CHỈ LƯU USER → role nằm trong user
   setUser: (u) => {
@@ -46,19 +37,14 @@ const useUserBaseStore = create<UserState>()((set) => ({
     setCookie('userData', JSON.stringify(u));
   },
 
-  setTokens: ({ access_token, refresh_token, token_type, expires_in }) => {
+  setTokens: ({ accessToken, refreshToken }) => {
+    
     set({
-      accessToken: access_token,
-      refreshToken: refresh_token || '',
-      tokenType: token_type,
-      expiresIn: expires_in,
+      accessToken: accessToken,
+      refreshToken: refreshToken
     });
-    setCookie('accessToken', access_token);
-    if (refresh_token) {
-      setCookie('refreshToken', refresh_token);
-    }
-    setCookie('tokenType', token_type);
-    setCookie('expiresIn', expires_in.toString());
+    setCookie('accessToken', accessToken);
+    setCookie('refreshToken', refreshToken);
   },
 
   clearUser: () => {
@@ -66,14 +52,9 @@ const useUserBaseStore = create<UserState>()((set) => ({
       user: null,
       accessToken: '',
       refreshToken: '',
-      tokenType: '',
-      expiresIn: 0,
     });
     deleteCookie('accessToken');
     deleteCookie('refreshToken');
-    deleteCookie('tokenType');
-    deleteCookie('expiresIn');
-    deleteCookie('userData'); // XÓA USER
   },
 }));
 
@@ -88,19 +69,11 @@ useUserBaseStore.subscribe((state, prevState) => {
     }
   }
 
-  if (state.tokenType !== prevState.tokenType) {
-    if (state.tokenType) {
-      setCookie("tokenType", state.tokenType);
+  if (state.refreshToken !== prevState.refreshToken) {
+    if (state.refreshToken) {
+      setCookie("refreshToken", state.refreshToken);
     } else {
-      deleteCookie("tokenType");
-    }
-  }
-
-  if (state.expiresIn !== prevState.expiresIn) {
-    if (state.expiresIn) {
-      setCookie("expiresIn", state.expiresIn.toString());
-    } else {
-      deleteCookie("expiresIn");
+      deleteCookie("refreshToken");
     }
   }
 

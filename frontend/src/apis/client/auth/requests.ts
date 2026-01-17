@@ -4,75 +4,60 @@ import { LoginSchemaType, RegisterSchemaType } from '@/lib/validations/auth-clie
 
 import { request } from '@/apis/axios';
 import { KEYS } from './keys';
-import { ILoginResponse, ILogoutResponse, IRefreshTokenResponse, IRegisterResponse, IUserResponse } from './types';
+import { ILoginResponse, ILogoutResponse, IRefreshTokenResponse, IRegisterResponse, IUserResponse, IUser, UserRole } from './types';
 
 export const AuthService = {
   me: async (): Promise<IUserResponse> => {
-    const response = await request.get<IUserResponse>(KEYS.AUTH_ME);
+    const response = await request.get<any>(KEYS.AUTH_ME);
+
+    // Transform backend response to match IUser interface
+    const userData: IUser = {
+      id: response.data.id,
+      email: response.data.email,
+      full_name: response.data.displayName || response.data.display_name || '',
+      userName: response.data.username || response.data.userName || '',
+      avatar_url: response.data.avatarUrl || response.data.avatar_url,
+      role: UserRole.USER, // Default role, can be updated based on actual roles later
+    };
+
     const { setUser } = useUserStore.getState();
-    setUser(response.data);
+    setUser(userData);
+
+    return userData;
+  },
+
+  login: async (data: LoginSchemaType): Promise<ILoginResponse> => {
+    const response = await request.post<ILoginResponse>(KEYS.AUTH_LOGIN, {
+      email: data.email,
+      password: data.password
+    });
+console.log(response);
 
     return response.data;
   },
 
-  login: async (data: LoginSchemaType): Promise<ILoginResponse> => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: { user: any; accessToken: string; refreshToken: string } = await request.post(KEYS.AUTH_LOGIN, data);
-
-    // Transform backend response to match frontend expectations
-    // Backend returns: { user, accessToken, refreshToken }
-    return {
-      access_token: response.accessToken,
-      refresh_token: response.refreshToken,
-      token_type: 'Bearer',
-      expires_in: 3600, // 1 hour
-    };
-  },
-
   register: async (data: RegisterSchemaType): Promise<IRegisterResponse> => {
-    const response = await request.post(KEYS.AUTH_REGISTER, {
+    const payload = {
       email: data.email,
       password: data.password,
-      fullName: `${data.firstName} ${data.lastName}`,
-    });
-
-    // Transform backend response to match frontend expectations
-    return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      accessToken: (response as any).accessToken,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      refreshToken: (response as any).refreshToken,
+      fullName: `${data.firstName} ${data.lastName}`
     };
+    console.log('📤 Frontend register request:', payload);
+    try {
+      const response = await request.post<IRegisterResponse>(KEYS.AUTH_REGISTER, payload);
+      console.log('✅ Frontend register success:', response.data);
+      return response.data;
+    } catch (error) {
+      console.log('❌ Frontend register error:', error);
+      throw error;
+    }
   },
 
   refreshToken: async (): Promise<IRefreshTokenResponse> => {
-    const { refreshToken } = useUserStore.getState();
-
-    // Temporarily use refresh token for this request
-    const response: { accessToken: string; refreshToken: string } = await request.post(
-      KEYS.AUTH_REFRESH_TOKEN,
-      {},
-      {
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`,
-        },
-      }
-    );
-
-    // Backend returns: { accessToken, refreshToken }
-    // Transform to match frontend expectations
-    const transformedResponse = {
-      access_token: response.accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600, // 1 hour
-    };
-
+    const response = await request.post<IRefreshTokenResponse>(KEYS.AUTH_REFRESH_TOKEN, {});
     const { setTokens } = useUserStore.getState();
-    setTokens({
-      ...transformedResponse,
-      refresh_token: response.refreshToken
-    });
-    return transformedResponse;
+    setTokens(response.data);
+    return response.data;
   },
 
   logout: async (): Promise<ILogoutResponse> => {

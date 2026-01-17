@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useRegisterMutation } from '@/apis/client/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AuthService, KEYS, useRegisterMutation } from '@/apis/client/auth';
+import { useQueryClient } from '@tanstack/react-query';
+import { useUserStore } from '@/stores/userStore';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -16,6 +18,8 @@ import { TextField } from '@/components/ui/Form/TextField';
 
 export function RegisterForm({ className, ...props }: React.ComponentProps<'div'>) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const form = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -30,16 +34,32 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
   });
 
   const { mutate: register, isPending } = useRegisterMutation({
-    onSuccess: () => {
-      toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
-      router.push(ROUTES.LOGIN);
+    onSuccess: async () => {
+      try {
+        // Auto login after successful registration
+        const loginResponse = await AuthService.login({
+          email: form.getValues('email'),
+          password: form.getValues('password'),
+        });
+
+        // Set tokens and user data
+        useUserStore.getState().setTokens(loginResponse);
+
+        // Fetch user data
+        await queryClient.fetchQuery({
+          queryKey: [KEYS.AUTH_ME],
+          queryFn: AuthService.me,
+        });
+
+        toast.success('Đăng ký thành công! Chào mừng bạn đến với CVking!');
+        const redirect = searchParams.get('redirect');
+        router.push(redirect || ROUTES.HOME);
+      } catch {
+        // If auto-login fails, redirect to login page
+        toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
+        router.push(ROUTES.LOGIN);
+      }
       form.reset();
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (error: any) => {
-      console.error('Registration error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-      toast.error(errorMessage);
     },
   });
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Settings, MousePointer } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editorStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,18 +30,18 @@ export const PropertiesPanel = () => {
 
   const handleColumnBackgroundChange = (columnIndex: number, color: string) => {
     if (selectedElement && (selectedElement.type === '2columns' || selectedElement.type === '3columns' || selectedElement.type === '4columns')) {
-      const currentColors = (selectedElement as unknown as Record<string, unknown>).columnBackgroundColors as string[] || [];
+      const currentColors = (selectedElement as any).columnBackgroundColors || [];
       const newColors = [...currentColors];
       newColors[columnIndex] = color;
       updateElement(selectedElement.id, {
         columnBackgroundColors: newColors,
-      } as unknown as Record<string, unknown>);
+      } as any);
     }
   };
 
   const isColumnLayout = selectedElement && (selectedElement.type === '2columns' || selectedElement.type === '3columns' || selectedElement.type === '4columns');
   const columnCount = isColumnLayout ? (selectedElement.type === '2columns' ? 2 : selectedElement.type === '3columns' ? 3 : 4) : 0;
-  const columnBackgroundColors = isColumnLayout ? ((selectedElement as unknown as Record<string, unknown>).columnBackgroundColors as string[] || []) : [];
+  const columnBackgroundColors = isColumnLayout ? ((selectedElement as any).columnBackgroundColors || []) : [];
 
   return (
     <aside className="w-[280px] bg-background border-l border-border flex flex-col h-full">
@@ -95,7 +96,7 @@ export const PropertiesPanel = () => {
                         <Slider
                           value={[currentWidth]}
                           onValueChange={(value) => {
-                            const newWidths = [...(selectedElement.columnWidths || Array.from({ length: columnCount }, () =>
+                            const newWidths = [...(selectedElement.columnWidths || Array.from({ length: columnCount }, (_, i) => 
                               columnCount === 2 ? 50 : columnCount === 3 ? 33.33 : 25
                             ))];
                             newWidths[idx] = value[0];
@@ -116,7 +117,7 @@ export const PropertiesPanel = () => {
                           onChange={(e) => {
                             const value = parseFloat(e.target.value);
                             if (!isNaN(value) && value >= 10 && value <= 90) {
-                              const newWidths = [...(selectedElement.columnWidths || Array.from({ length: columnCount }, () =>
+                              const newWidths = [...(selectedElement.columnWidths || Array.from({ length: columnCount }, (_, i) => 
                                 columnCount === 2 ? 50 : columnCount === 3 ? 33.33 : 25
                               ))];
                               newWidths[idx] = value;

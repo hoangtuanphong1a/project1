@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useGetBlogInfiniteQuery } from '@/apis/client/blog/queries';
+import { useQueryClient } from '@tanstack/react-query';
 
 import Backpage from '@/components/ui/back-page';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -9,8 +10,10 @@ import { DataTable } from '@/components/ui/data-table';
 
 import { columns } from './config/columns';
 import { buildTreeFromPosts } from './libs/utils';
+import { KEYS } from '@/apis/client/blog/keys';
 
 function PostManagement() {
+  const queryClient = useQueryClient();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetBlogInfiniteQuery(
     undefined,
     { limit: 100 } // Maximum allowed by backend

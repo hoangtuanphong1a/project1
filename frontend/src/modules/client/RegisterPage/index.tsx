@@ -13,13 +13,11 @@ export default function RegisterPage() {
       <div className="relative hidden overflow-hidden lg:block">
         <BgGradient />
         <Image
-          src="/images/bg.svg"
-          alt="Tuyển dụng - CVking"
+          src="/images/bg.jpg"
+          alt="Image"
           fill
           className="absolute inset-0 h-full w-full object-cover"
-          priority
         />
-        <div className="absolute inset-0 bg-black/20" />
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
