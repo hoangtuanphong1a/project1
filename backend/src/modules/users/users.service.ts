@@ -37,7 +37,7 @@ export class UsersService {
  * Lấy thông tin user đầy đủ cho API "My Profile"
  * Trả về tất cả trường an toàn, ẩn password và refreshToken
  */
-  async getSafeUserById(id: string): Promise<Partial<Users>> {
+  async getSafeUserById(id: string): Promise<any> {
     const user = await this.em.findOne(
       Users,
       { id },
@@ -60,7 +60,34 @@ export class UsersService {
     );
 
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-    return user;
+
+    // Transform to match frontend expectations
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      full_name: user.displayName,
+      avatar_url: user.avatarUrl,
+      preferredLocale: user.preferredLocale,
+      isEmailConfirmed: user.isEmailConfirmed,
+      isActive: user.isActive,
+      isDeleted: user.isDeleted,
+      lastLoginAt: user.lastLoginAt,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+      // Default values for fields not in current entity
+      bio: null,
+      show_email: true,
+      website: null,
+      twitter_url: null,
+      facebook_url: null,
+      linkedin_url: null,
+      github_url: null,
+      posts_count: 0,
+      followers_count: 0,
+      following_count: 0,
+      is_2fa_enabled: false,
+    };
   }
 
   // async getUserById(id: string): Promise<Omit<Users, 'password' | 'refreshToken'>> {

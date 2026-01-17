@@ -7,26 +7,7 @@ import { envConfig } from '@/lib/const';
 const request = Axios.create({
   baseURL: envConfig.API_URL,
   withCredentials: true, // quan trọng nếu dùng cookie
-  timeout: 10000, // 10 second timeout
 });
-
-// Add request interceptor for debugging
-request.interceptors.request.use(
-  (config) => {
-    console.log('API Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      headers: config.headers,
-    });
-    return config;
-  },
-  (error) => {
-    console.error('Request Error:', error);
-    return Promise.reject(error);
-  }
-);
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -63,10 +44,11 @@ request.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { access_token } = await AuthService.refreshToken();
+        const { accessToken } = await AuthService.refreshToken();
+        
         // const { accessToken } = useUserStore.getState();
-        originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
-        processQueue(null, access_token);
+        originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+        processQueue(null, accessToken);
         return request(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
@@ -83,23 +65,12 @@ request.interceptors.response.use(
 );
 
 // Tự động thêm token vào header
-request.interceptors.request.use(
-  (config) => {
-    const { accessToken, tokenType } = useUserStore.getState();
-    console.log('Auth Interceptor - Token check:', { accessToken: !!accessToken, tokenType });
-
-    if (accessToken) {
-      config.headers['Authorization'] = `${tokenType} ${accessToken}`;
-      console.log('Auth Header Added:', config.headers['Authorization']);
-    } else {
-      console.log('No token found, skipping auth header');
-    }
-    return config;
-  },
-  (error) => {
-    console.error('Auth Header Error:', error);
-    return Promise.reject(error);
+request.interceptors.request.use((config) => {
+  const { accessToken } = useUserStore.getState();
+  if (accessToken) {
+    config.headers['Authorization'] = `Bearer ${accessToken}`;
   }
-);
+  return config;
+});
 
 export { request };

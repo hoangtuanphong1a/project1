@@ -34,15 +34,13 @@ export class UsersController {
   //   const data = await this.usersService.getUserById(userId);
   //   return { status: 'success', message: 'User profile fetched', data };
   // }
-  @Get('my-profile')
+  @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMyProfile(
     @Req() req: any
   ): Promise<ApiResponse<Partial<Users>>> {
-    console.log('req.user', req.user); // thêm log
     const userId = req.user.sub;
     if (!userId) throw new NotFoundException('No userId in JWT');
-
 
     const data = await this.usersService.getSafeUserById(userId);
     return { status: 'success', message: 'User profile fetched', data };
@@ -50,7 +48,7 @@ export class UsersController {
 
 
 
-  @Put('my-profile')
+  @Put('me')
   @UseGuards(JwtAuthGuard)
   async updateMyProfile(
     @Req() req: any,
