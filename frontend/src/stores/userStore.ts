@@ -1,19 +1,43 @@
 // @/stores/userStore.ts
 import { IUser} from '@/apis/client/auth/types';
 import { createSelectorHooks } from 'auto-zustand-selectors-hook';
-import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import { create } from 'zustand';
 
-const getCookieValue = (key: string): string => {
-  const value = getCookie(key);
-  return typeof value === 'string' ? value : '';
+// Helper functions for localStorage
+const getLocalStorageValue = (key: string): string => {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem(key) || '';
+  } catch {
+    return '';
+  }
 };
 
-// Khởi tạo từ cookie
-const initialAccess = getCookieValue('accessToken');
-const initialRefreshToken = getCookieValue('refreshToken');
 
-const initialUserJson = getCookieValue('userData');
+
+const setLocalStorageValue = (key: string, value: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    console.warn('Failed to set localStorage:', key);
+  }
+};
+
+const removeLocalStorageValue = (key: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    console.warn('Failed to remove localStorage:', key);
+  }
+};
+
+// Khởi tạo từ localStorage
+const initialAccess = getLocalStorageValue('accessToken');
+const initialRefreshToken = getLocalStorageValue('refreshToken');
+
+const initialUserJson = getLocalStorageValue('userData');
 const initialUser: IUser | null = initialUserJson ? JSON.parse(initialUserJson) : null;
 
 interface UserState {
@@ -26,7 +50,7 @@ interface UserState {
   clearUser: () => void;
 }
 
-const useUserBaseStore = create<UserState>()((set) => ({
+const useUserBaseStore = create<UserState>()((set, get) => ({
   user: initialUser,
   accessToken: initialAccess,
   refreshToken: initialRefreshToken,
@@ -34,17 +58,27 @@ const useUserBaseStore = create<UserState>()((set) => ({
   // CHỈ LƯU USER → role nằm trong user
   setUser: (u) => {
     set({ user: u });
-    setCookie('userData', JSON.stringify(u));
+    setLocalStorageValue('userData', JSON.stringify(u));
   },
 
   setTokens: ({ accessToken, refreshToken }) => {
-    
+    console.log('setTokens called with:', { accessToken, refreshToken });
+    console.log('accessToken type:', typeof accessToken);
+    console.log('refreshToken type:', typeof refreshToken);
+
+    if (!accessToken || !refreshToken) {
+      console.error('setTokens called with undefined tokens!');
+      return;
+    }
+
     set({
       accessToken: accessToken,
       refreshToken: refreshToken
     });
-    setCookie('accessToken', accessToken);
-    setCookie('refreshToken', refreshToken);
+
+    // Sync to localStorage
+    setLocalStorageValue('accessToken', accessToken);
+    setLocalStorageValue('refreshToken', refreshToken);
   },
 
   clearUser: () => {
@@ -53,36 +87,39 @@ const useUserBaseStore = create<UserState>()((set) => ({
       accessToken: '',
       refreshToken: '',
     });
-    deleteCookie('accessToken');
-    deleteCookie('refreshToken');
+
+    // Clear localStorage
+    removeLocalStorageValue('accessToken');
+    removeLocalStorageValue('refreshToken');
+    removeLocalStorageValue('userData');
   },
 }));
 
-// ĐỒNG BỘ COOKIE KHI STORE THAY ĐỔI
+// ĐỒNG BỘ localStorage KHI STORE THAY ĐỔI
 useUserBaseStore.subscribe((state, prevState) => {
   // Token
   if (state.accessToken !== prevState.accessToken) {
     if (state.accessToken) {
-      setCookie("accessToken", state.accessToken);
+      setLocalStorageValue("accessToken", state.accessToken);
     } else {
-      deleteCookie("accessToken");
+      removeLocalStorageValue("accessToken");
     }
   }
 
   if (state.refreshToken !== prevState.refreshToken) {
     if (state.refreshToken) {
-      setCookie("refreshToken", state.refreshToken);
+      setLocalStorageValue("refreshToken", state.refreshToken);
     } else {
-      deleteCookie("refreshToken");
+      removeLocalStorageValue("refreshToken");
     }
   }
 
   // User object
   if (state.user !== prevState.user) {
     if (state.user) {
-      setCookie("userData", JSON.stringify(state.user));
+      setLocalStorageValue("userData", JSON.stringify(state.user));
     } else {
-      deleteCookie("userData");
+      removeLocalStorageValue("userData");
     }
   }
 });

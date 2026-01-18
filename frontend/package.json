@@ -55,7 +55,6 @@
     "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "cookies-next": "^6.1.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
@@ -69,6 +68,7 @@
     "next-themes": "^0.4.6",
     "nextjs-toploader": "^3.9.17",
     "node-appwrite": "^20.2.1",
+    "playwright": "^1.40.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -89,8 +89,7 @@
     "three": "^0.180.0",
     "vaul": "^0.9.9",
     "zod": "^3.25.76",
-    "zustand": "^5.0.9",
-    "playwright": "^1.40.0"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

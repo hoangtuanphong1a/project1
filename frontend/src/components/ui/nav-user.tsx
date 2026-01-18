@@ -41,7 +41,7 @@ export function NavUser({ user }: Props) {
   });
 
   const handleLogout = () => {
-    logout();
+    logout(user.id);
   };
 
   // Chuẩn hóa role (không phân biệt hoa/thường)

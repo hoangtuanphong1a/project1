@@ -34,32 +34,49 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<'div'
   });
 
   const { mutate: register, isPending } = useRegisterMutation({
-    onSuccess: async () => {
+    onSuccess: async (registerData) => {
       try {
-        // Auto login after successful registration
+        // Auto-login after successful registration
         const loginResponse = await AuthService.login({
           email: form.getValues('email'),
           password: form.getValues('password'),
         });
 
         // Set tokens and user data
-        useUserStore.getState().setTokens(loginResponse);
+        useUserStore.getState().setTokens({
+          accessToken: loginResponse.accessToken,
+          refreshToken: loginResponse.refreshToken,
+        });
 
-        // Fetch user data
-        await queryClient.fetchQuery({
+        // Fetch and set user data
+        const userData = await queryClient.fetchQuery({
           queryKey: [KEYS.AUTH_ME],
           queryFn: AuthService.me,
         });
 
-        toast.success('Đăng ký thành công! Chào mừng bạn đến với CVking!');
+        toast.success(`🎉 Chào mừng ${userData.full_name || userData.userName}! Tài khoản đã được tạo thành công.`);
         const redirect = searchParams.get('redirect');
         router.push(redirect || ROUTES.HOME);
-      } catch {
-        // If auto-login fails, redirect to login page
-        toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      } catch (loginError) {
+        console.error('Auto-login failed:', loginError);
+        // If auto-login fails, show success but redirect to login
+        toast.success('✅ Tài khoản đã được tạo! Vui lòng đăng nhập để tiếp tục.');
         router.push(ROUTES.LOGIN);
       }
       form.reset();
+    },
+    onError: (error: any) => {
+      console.error('Registration error:', error);
+
+      // Handle specific error types
+      if (error.response?.status === 409) {
+        toast.error('❌ Email này đã được sử dụng. Vui lòng chọn email khác.');
+        form.setFocus('email');
+      } else if (error.response?.status === 400) {
+        toast.error('❌ Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.');
+      } else {
+        toast.error('❌ Đăng ký thất bại. Vui lòng thử lại sau.');
+      }
     },
   });
 

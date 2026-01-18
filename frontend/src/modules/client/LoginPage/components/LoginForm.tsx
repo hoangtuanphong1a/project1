@@ -30,6 +30,14 @@ export function LoginForm({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+  // Check for session expired message
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'session_expired') {
+      toast.error('⏰ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+  }, [searchParams]);
+
 
 
   const form = useForm<LoginSchemaType>({
@@ -45,13 +53,42 @@ export function LoginForm({
 
   const { mutate: login, isPending } = useLoginMutation({
     onSuccess: async (data) => {
-      console.log("long", data);
+      console.log("login response:", data);
+      console.log("accessToken:", data.accessToken);
+      console.log("refreshToken:", data.refreshToken);
 
-      setTokens(data);
-      // toast.success("Chào mừng trở lại!");
-      // const redirect = searchParams.get("redirect");
-      // router.push(redirect || ROUTES.HOME);
-      // form.reset();
+      // Extract tokens from response
+      const { accessToken, refreshToken } = data;
+      console.log("Extracted accessToken:", accessToken);
+      console.log("Extracted refreshToken:", refreshToken);
+
+      setTokens({ accessToken, refreshToken });
+
+      toast.success("🎉 Đăng nhập thành công! Chào mừng trở lại!");
+      const redirect = searchParams.get("redirect");
+      console.log("Redirect URL:", redirect);
+      console.log("ROUTES.HOME:", ROUTES.HOME);
+      console.log("Final redirect destination:", redirect || ROUTES.HOME);
+
+      // Use Next.js router for client-side navigation
+      const destination = redirect || ROUTES.HOME;
+      console.log("Navigating to:", destination);
+      router.push(destination);
+
+      form.reset();
+    },
+    onError: (error: any) => {
+      console.error('Login error:', error);
+
+      // Handle specific error types
+      if (error.response?.status === 401) {
+        toast.error('❌ Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+        form.setFocus('email');
+      } else if (error.response?.status === 400) {
+        toast.error('❌ Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+      } else {
+        toast.error('❌ Đăng nhập thất bại. Vui lòng thử lại sau.');
+      }
     },
   });
 

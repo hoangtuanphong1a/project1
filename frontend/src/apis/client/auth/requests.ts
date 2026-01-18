@@ -60,8 +60,8 @@ console.log(response);
     return response.data;
   },
 
-  logout: async (): Promise<ILogoutResponse> => {
-    const response = await request.post<ILogoutResponse>(KEYS.AUTH_LOGOUT);
+  logout: async (userId: string): Promise<ILogoutResponse> => {
+    const response = await request.post<ILogoutResponse>(KEYS.AUTH_LOGOUT(userId));
     return response.data;
   },
 };

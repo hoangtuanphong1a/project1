@@ -1,7 +1,7 @@
 export const KEYS = {
-  AUTH_ME: '/users/my-profile',
+  AUTH_ME: '/users/me',
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
   AUTH_REFRESH_TOKEN: '/auth/refresh',
-  AUTH_LOGOUT: '/auth/logout',
+  AUTH_LOGOUT: (userId: string) => `/auth/logout/${userId}`,
 } as const;

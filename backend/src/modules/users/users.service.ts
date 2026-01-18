@@ -77,7 +77,7 @@ export class UsersService {
       updated_at: user.updatedAt,
       // Default values for fields not in current entity
       bio: null,
-      show_email: true,
+      show_email: "true",  // Fix: Convert boolean to string to match frontend type
       website: null,
       twitter_url: null,
       facebook_url: null,

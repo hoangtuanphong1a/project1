@@ -32,7 +32,7 @@ export const useRegisterMutation = (
   });
 };
 
-export const useLogoutMutation = (options?: Omit<UseMutationOptions<ILogoutResponse, Error>, 'mutationFn'>) => {
+export const useLogoutMutation = (options?: Omit<UseMutationOptions<ILogoutResponse, Error, string>, 'mutationFn'>) => {
   return useMutation({
     mutationFn: AuthService.logout,
     ...options,

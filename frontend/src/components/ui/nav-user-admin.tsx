@@ -42,12 +42,15 @@ export function NavUser({ user }: { user: Partial<Omit<IUser, "id" | "username">
   const router = useRouter();
   const logoutMutation = useLogoutMutation();
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const clearUser = useUserStore((s) => s.clearUser);
+  const { user: currentUser, clearUser } = useUserStore();
 
    const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync();
-      clearUser(); 
+      const userId = currentUser?.id;
+      if (userId) {
+        await logoutMutation.mutateAsync(userId);
+      }
+      clearUser();
       router.push("/admin/login");
     } catch (err) {
       console.error("Logout failed:", err);
